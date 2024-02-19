@@ -1,12 +1,16 @@
 const express = require("express");
-// const connectDB = require("./config/db");
-// const routes = require("./routes/api/books");
+const routes = require("./routes/apis/om2mApis"); // Import your router
 const cors = require("cors");
 const bodyParser = require("body-parser");
 
 const app = express();
 
-app.get('/', (req, res) => res.send('Hello world!'));
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+
+// Include your router as middleware
+app.use("/", routes);
 
 const port = process.env.PORT || 8080;
 
