@@ -7,6 +7,7 @@ const _url = "http://onem2m.iiit.ac.in:443/~/in-cse/in-name/";
 const _ae = "AE-WM/";
 const _cnt = "WM-WF/";
 const _desc = "/Descriptor/la/";
+const _data = "/Data/la/"
 const headers = {
     "X-M2M-Origin": "iiith_guest:iiith_guest",
     "Content-Type": "application/json"
@@ -25,6 +26,7 @@ nodes = ["WM-WF-PH01-00", "WM-WF-PH03-00", "WM-WF-PH03-01", "WM-WF-PH03-02", "WM
 "WM-WF-PH04-50", "WM-WF-PR00-50", "WM-WF-PL00-50", "WM-WF-BB04-50"]
 
 nodeLocations = {}
+nodeData = {}
 
 
 function get_desc(nodeName){
@@ -43,7 +45,23 @@ function get_desc(nodeName){
 }
     
 
-router.get("/api/getNodeInfo", async (req, res) => {
+function get_data(nodeName){
+    return new Promise((resolve, reject) => {
+        // Make a GET request to the OM2M API
+        axios.get(_url + _ae + _cnt+ nodeName + _data, { headers })
+            .then(response => {
+                // Handle the response
+                resolve(response.data["m2m:cin"].con);
+            })
+            .catch(error => {
+                console.error(error); // Log any errors
+                reject(error);
+            });
+    });
+}
+    
+
+router.get("/api/getNodeLocation", async (req, res) => {
     try {
         // iterating for each node in nodes array
         for (let i = 0; i < nodes.length; i++) {
@@ -58,6 +76,25 @@ router.get("/api/getNodeInfo", async (req, res) => {
             nodeLocations[nodes[i]] = nodeLocation;
         }
         res.send(nodeLocations);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+router.get("/api/getNodeData", async (req, res) => {
+    try {
+        // iterating for each node in nodes array
+        for (let i = 0; i < nodes.length; i++) {
+            console.log(nodes[i])
+            nodeInfo = await get_data(nodes[i]);
+            
+            console.log(nodeInfo);
+            nodeData[nodes[i]] = JSON.parse(nodeInfo);
+        }
+        console.log(nodeData)
+        res.send(nodeData);
 
     } catch (error) {
         console.error(error);
