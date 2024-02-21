@@ -27,6 +27,7 @@ nodes = ["WM-WF-PH01-00", "WM-WF-PH03-00", "WM-WF-PH03-01", "WM-WF-PH03-02", "WM
 
 nodeLocations = {}
 nodeData = {}
+nodeType = {}
 
 
 function get_desc(nodeName){
@@ -102,5 +103,29 @@ router.get("/api/getNodeData", async (req, res) => {
     }
 });
 
+function checkNodeType(node) {
+    const secondLastDigit = node.charAt(node.length - 2);
+    if (secondLastDigit === '0')
+    {
+        return "Shenitek";
+    }
+    else if (secondLastDigit === '5')
+    {
+        return "Kritsnam";
+    }
+    else
+    {
+        return "RF";
+    }
+}
+
+// TEST TO CHECK IF NODE TYPE FUNCTION IS WORKING
+// Loop through the nodes array and check each string
+nodes.forEach(node => {
+    // console.log(`${node}: ${checkNodeType(node)}`);
+    nodeType[node] = checkNodeType(node);
+});
+
+console.log(nodeType);
 
 module.exports = router;
