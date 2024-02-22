@@ -14,6 +14,7 @@ const headers = {
 };
 
 const convert = require('xml-js');
+const nodemon = require('nodemon');
 const options = {
     compact: true,
     ignoreComment: true,
@@ -25,9 +26,13 @@ nodes = ["WM-WF-PH01-00", "WM-WF-PH03-00", "WM-WF-PH03-01", "WM-WF-PH03-02", "WM
 "WM-WF-PH04-70", "WM-WF-PH04-71", "WM-WF-BB04-70", "WM-WF-BB04-71", "WM-WF-VN04-70", "WM-WF-VN04-71",
 "WM-WF-PH04-50", "WM-WF-PR00-50", "WM-WF-PL00-50", "WM-WF-BB04-50"]
 
+console.log(nodes.length)
+
 nodeLocations = {}
 nodeData = {}
 nodeType = {}
+missingNodes = []
+nodeDescrip = {}
 
 
 function get_desc(nodeName){
@@ -73,8 +78,18 @@ router.get("/api/getNodeLocation", async (req, res) => {
             nodeInfo = JSON.parse(nodeInfo);        
             // extracting the Node Location from nodeInfo json object
             nodeLocation = nodeInfo["obj"]["str"][1]["_attributes"]["val"];
+
+            // checking for missing values
+            nodeDescr = nodeInfo["obj"]["str"][4]["_attributes"]["val"];
+            nodeDescrip[nodes[i]] = nodeDescr;
+
             console.log(nodeLocation);
             nodeLocations[nodes[i]] = nodeLocation;
+        }
+        for (const node in nodeDescrip) {
+            if (nodeDescrip.hasOwnProperty(node)) {
+                nodeDescrip[node] = JSON.parse(nodeDescrip[node].replace(/'/g, '"'));
+            }
         }
         res.send(nodeLocations);
 
@@ -88,13 +103,21 @@ router.get("/api/getNodeData", async (req, res) => {
     try {
         // iterating for each node in nodes array
         for (let i = 0; i < nodes.length; i++) {
-            console.log(nodes[i])
+            // console.log(nodes[i])
             nodeInfo = await get_data(nodes[i]);
             
-            console.log(nodeInfo);
+            // console.log(nodeInfo);
             nodeData[nodes[i]] = JSON.parse(nodeInfo);
+
+            // if(nodeData[nodes[i]].length != nodeDescrip[nodes[i]].length)
+            // {
+            //     console.log("node data:", nodeData[nodes[i]]);
+            //     console.log("node descriptor:", nodeDescrip[nodes[i]]);
+            //     missingNodes.push(nodes[i]);
+            // }
         }
         console.log(nodeData)
+        // console.log("missing nodes", missingNodes);
         res.send(nodeData);
 
     } catch (error) {
@@ -118,14 +141,22 @@ function checkNodeType(node) {
         return "RF";
     }
 }
-
-// TEST TO CHECK IF NODE TYPE FUNCTION IS WORKING
 // Loop through the nodes array and check each string
 nodes.forEach(node => {
     // console.log(`${node}: ${checkNodeType(node)}`);
     nodeType[node] = checkNodeType(node);
 });
+console.log(nodeType);
 
 console.log(nodeType);
+router.get("/api/getNodeType", async (req, res) => {
+    try {
+        res.send(nodeType);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Internal Server Error");
+    }
+});
 
 module.exports = router;
