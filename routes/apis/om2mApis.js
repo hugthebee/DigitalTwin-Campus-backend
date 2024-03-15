@@ -28,15 +28,17 @@ nodes = ["WM-WF-PH01-00", "WM-WF-PH03-00", "WM-WF-PH03-01", "WM-WF-PH03-02", "WM
 
 console.log(nodes.length)
 
+console.log(nodes.length)
+
 nodeLocations = {}
 nodeData = {}
 nodeType = {}
 missingNodes = []
 nodeDescrip = {}
+
 observedValues = []
 observedPoints = []
 predictionPoints = [[17.445908, 78.349947]];
-
 
 function get_desc(nodeName) {
     return new Promise((resolve, reject) => {
@@ -117,7 +119,6 @@ router.get("/api/getNodeData", async (req, res) => {
         for (let i = 0; i < nodes.length; i++) {
             // console.log(nodes[i])
             nodeInfo = await get_data(nodes[i]);
-
             // console.log(nodeInfo);
             nodeData[nodes[i]] = JSON.parse(nodeInfo);
             observedValues.push(JSON.parse(nodeInfo)[2]);
@@ -125,6 +126,9 @@ router.get("/api/getNodeData", async (req, res) => {
         }
         console.log(nodeData)
         console.log("observed values = ", observedValues)
+        nodeData[nodes[i]] = JSON.parse(nodeInfo);
+        }
+        console.log(nodeData)
         res.send(nodeData);
 
     } catch (error) {
@@ -162,7 +166,6 @@ router.get("/api/getNodeType", async (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 });
-
 
 function inverseDistanceWeighting(observedPoints, observedValues, predictionPoints, power = 2) {
     // Compute distances between observed and prediction points
