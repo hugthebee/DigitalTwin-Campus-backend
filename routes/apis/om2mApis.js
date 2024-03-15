@@ -28,17 +28,14 @@ nodes = ["WM-WF-PH01-00", "WM-WF-PH03-00", "WM-WF-PH03-01", "WM-WF-PH03-02", "WM
 
 console.log(nodes.length)
 
-console.log(nodes.length)
-
 nodeLocations = {}
 nodeData = {}
 nodeType = {}
 missingNodes = []
 nodeDescrip = {}
-
 observedValues = []
 observedPoints = []
-predictionPoints = [[17.445908, 78.349947]];
+predictionPoints = [];
 
 function get_desc(nodeName) {
     return new Promise((resolve, reject) => {
@@ -88,7 +85,7 @@ router.get("/api/getNodeLocation", async (req, res) => {
             nodeDescr = nodeInfo["obj"]["str"][4]["_attributes"]["val"];
             nodeDescrip[nodes[i]] = nodeDescr;
 
-            console.log(nodeLocation);
+            // console.log(nodeLocation);
             nodeLocations[nodes[i]] = nodeLocation;
             const nodeLocationObject = JSON.parse(nodeLocation.replace(/'/g, '"'));
 
@@ -97,6 +94,7 @@ router.get("/api/getNodeLocation", async (req, res) => {
             const longitude = nodeLocationObject.Longitude;
 
             observedPoints.push([latitude, longitude]);
+            // console.log(observedPoints);
 
         }
         for (const node in nodeDescrip) {
@@ -104,7 +102,7 @@ router.get("/api/getNodeLocation", async (req, res) => {
                 nodeDescrip[node] = JSON.parse(nodeDescrip[node].replace(/'/g, '"'));
             }
         }
-        console.log(observedPoints);
+        console.log("observed pts= ", observedPoints);
         res.send(nodeLocations);
 
     } catch (error) {
@@ -119,6 +117,7 @@ router.get("/api/getNodeData", async (req, res) => {
         for (let i = 0; i < nodes.length; i++) {
             // console.log(nodes[i])
             nodeInfo = await get_data(nodes[i]);
+
             // console.log(nodeInfo);
             nodeData[nodes[i]] = JSON.parse(nodeInfo);
             observedValues.push(JSON.parse(nodeInfo)[2]);
@@ -126,9 +125,6 @@ router.get("/api/getNodeData", async (req, res) => {
         }
         console.log(nodeData)
         console.log("observed values = ", observedValues)
-        nodeData[nodes[i]] = JSON.parse(nodeInfo);
-        }
-        console.log(nodeData)
         res.send(nodeData);
 
     } catch (error) {
@@ -167,6 +163,7 @@ router.get("/api/getNodeType", async (req, res) => {
     }
 });
 
+
 function inverseDistanceWeighting(observedPoints, observedValues, predictionPoints, power = 2) {
     // Compute distances between observed and prediction points
     function euclideanDistance(point1, point2) {
@@ -175,9 +172,14 @@ function inverseDistanceWeighting(observedPoints, observedValues, predictionPoin
 
     // Calculate weights for each prediction point
     function calculateWeights(observedPoint, predictionPoints) {
+        console.log("observedPoint = ", observedPoint);
+        console.log("predictionPoints = ", predictionPoints);
         distances = predictionPoints.map(predictionPoint => euclideanDistance(observedPoint, predictionPoint));
-        weights = distances.map(distance => 1 / distance ** power);
+        console.log("dis =", distances);
+        weights = distances.map(distance => 1 / distance ** 1);
+        console.log("weights = ", weights);
         sumOfWeights = weights.reduce((sum, weight) => sum + weight, 0);
+        console.log("sum = ", sumOfWeights);
         return weights.map(weight => weight / sumOfWeights);
     }
 
@@ -185,9 +187,30 @@ function inverseDistanceWeighting(observedPoints, observedValues, predictionPoin
     return predictionPoints.map(predictionPoint => {
         weights = observedPoints.map(observedPoint => calculateWeights(observedPoint, [predictionPoint])[0]);
         interpolatedValue = observedValues.reduce((sum, value, index) => sum + value * weights[index], 0);
-        return interpolatedValue;
+        return interpolatedValue/1e4;
     });
 }
+
+// api call to get the predictionPoints from the frontend
+router.post("/api/setPredictionPoints", async (req, res) => {
+    // predictionPoints = [[17.445908, 78.349947]];
+
+    try {
+        console.log("hiii");
+        predictionPoints = req.body;
+        // console.log(predictionPoints);
+        res.send("Prediction Points Set");
+        lat = predictionPoints["latitude"];
+        long = predictionPoints["longitude"];
+        predictionPoints = [[lat, long]];
+        console.log(predictionPoints);
+
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Internal Server Error");
+    }
+});
 
 router.get("/api/getPredictedVal", async (req, res) => {
     try {
