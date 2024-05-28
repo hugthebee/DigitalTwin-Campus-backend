@@ -167,7 +167,7 @@ router.get("/api/getNodeType", async (req, res) => {
 function inverseDistanceWeighting(observedPoints, observedValues, predictionPoints, power = 2) {
     // Compute distances between observed and prediction points
     function euclideanDistance(point1, point2) {
-        return Math.sqrt((point1[0] - point2[0]) * 2 + (point1[1] - point2[1]) * 2);
+        return Math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2);
     }
 
     // Calculate weights for each prediction point
